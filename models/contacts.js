@@ -1,57 +1,49 @@
-const { nanoid } = require("nanoid");
-const fs = require("fs/promises");
-const path = require("path");
+const mongoose = require("mongoose");
+const Joi = require("joi");
 
-const contactsPath = path.join(__dirname, "contacts.json");
+const Schema = mongoose.Schema;
 
-const listContacts = async () => {
-  const data = await fs.readFile(contactsPath);
-  return JSON.parse(data);
-};
+const contact = new Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Set name for contact"],
+    },
+    email: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { versionKey: false, timestamps: true }
+);
 
-const getContactById = async (contactId) => {
-  const contacts = await listContacts();
-  const contact = contacts.find((el) => el.id === contactId);
-  return contact ?? null;
-};
+const contactSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().required(),
+  phone: Joi.string().required(),
+});
 
-const removeContact = async (contactId) => {
-  const contacts = await listContacts();
-  const contactIndex = contacts.findIndex((el) => el.id === contactId);
-  if (contactIndex === -1) {
-    return null;
-  }
-  const [removedContact] = contacts.splice(contactIndex, 1);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return removedContact;
-};
+const contactPutSchema = Joi.object({
+  name: Joi.string(),
+  email: Joi.string(),
+  phone: Joi.string(),
+});
 
-const addContact = async (body) => {
-  const contacts = await listContacts();
-  const newContact = {
-    id: nanoid(),
-    ...body,
-  };
-  contacts.push(newContact);
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return newContact;
-};
+const contactPatchSchema = Joi.object({
+  favorite: Joi.boolean().required(),
+});
 
-const updateContact = async (contactId, body) => {
-  const contacts = await listContacts();
-  const contactIndex = contacts.findIndex((el) => el.id === contactId);
-  if (contactIndex === -1) {
-    return null;
-  }
-  contacts[contactIndex] = { ...contacts[contactIndex], ...body };
-  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-  return contacts[contactIndex];
-};
+const Contact = mongoose.model("contact", contact);
 
 module.exports = {
-  listContacts,
-  getContactById,
-  removeContact,
-  addContact,
-  updateContact,
+  Contact,
+  contactSchema,
+  contactPutSchema,
+  contactPatchSchema,
 };
