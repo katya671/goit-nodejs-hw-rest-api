@@ -7,12 +7,22 @@ const {
 
 const getAll = async (req, res, next) => {
   try {
-    const contacts = await Contact.find({ owner: req.user._id });
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const ownerId = req.user._id;
+
+    const contacts = await Contact.find({ owner: ownerId })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalContacts = await Contact.countDocuments({ owner: ownerId });
     res.json({
       status: "success",
       code: 200,
       data: {
         contacts,
+        totalContacts,
       },
     });
   } catch (error) {
@@ -22,7 +32,10 @@ const getAll = async (req, res, next) => {
 
 const getById = async (req, res, next) => {
   try {
-    const contact = await Contact.findById(req.params.contactId);
+    const contact = await Contact.findOne({
+      _id: req.params.contactId,
+      owner: req.user._id,
+    });
     if (!contact) {
       res.status(404).json({
         status: "error",
@@ -67,7 +80,7 @@ const add = async (req, res, next) => {
 
 const remove = async (req, res, next) => {
   try {
-    const contact = await Contact.findByIdAndRemove({
+    const contact = await Contact.findOneAndRemove({
       _id: req.params.contactId,
       owner: req.user._id,
     });
@@ -98,7 +111,7 @@ const update = async (req, res, next) => {
         message: "missing fields",
       });
     }
-    const contact = await Contact.findByIdAndUpdate(
+    const contact = await Contact.findOneAndUpdate(
       { _id: req.params.contactId, owner: req.user._id },
       req.body,
       {
@@ -134,7 +147,7 @@ const updateStatusContact = async (req, res, next) => {
         message: "missing field favorite",
       });
     }
-    const contact = await Contact.findByIdAndUpdate(
+    const contact = await Contact.findOneAndUpdate(
       { _id: req.params.contactId, owner: req.user._id },
       req.body,
       {
