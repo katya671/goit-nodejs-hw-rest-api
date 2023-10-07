@@ -7,7 +7,7 @@ const {
 
 const getAll = async (req, res, next) => {
   try {
-    const contacts = await Contact.find();
+    const contacts = await Contact.find({ owner: req.user._id });
     res.json({
       status: "success",
       code: 200,
@@ -52,7 +52,7 @@ const add = async (req, res, next) => {
         message: "missing required fields",
       });
     }
-    const contact = await Contact.create(req.body);
+    const contact = await Contact.create({ ...req.body, owner: req.user._id });
     res.status(201).json({
       status: "success",
       code: 201,
@@ -67,7 +67,10 @@ const add = async (req, res, next) => {
 
 const remove = async (req, res, next) => {
   try {
-    const contact = await Contact.findByIdAndRemove(req.params.contactId);
+    const contact = await Contact.findByIdAndRemove({
+      _id: req.params.contactId,
+      owner: req.user._id,
+    });
     if (!contact) {
       return res.status(404).json({
         status: "error",
@@ -96,7 +99,7 @@ const update = async (req, res, next) => {
       });
     }
     const contact = await Contact.findByIdAndUpdate(
-      req.params.contactId,
+      { _id: req.params.contactId, owner: req.user._id },
       req.body,
       {
         new: true,
@@ -132,7 +135,7 @@ const updateStatusContact = async (req, res, next) => {
       });
     }
     const contact = await Contact.findByIdAndUpdate(
-      req.params.contactId,
+      { _id: req.params.contactId, owner: req.user._id },
       req.body,
       {
         new: true,
