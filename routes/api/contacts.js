@@ -1,7 +1,4 @@
 const express = require("express");
-
-const router = express.Router();
-
 const {
   getAll,
   getById,
@@ -9,18 +6,21 @@ const {
   remove,
   update,
   updateStatusContact,
-} = require("../../controller/index");
+} = require("../../controllers/contact");
+const { authenticate } = require("../../middlewares/auth");
 
-router.get("/", getAll);
+const router = express.Router();
 
-router.get("/:contactId", getById);
+router.get("/", authenticate, getAll);
 
-router.post("/", add);
+router.get("/:contactId", authenticate, getById);
 
-router.delete("/:contactId", remove);
+router.post("/", authenticate, add);
 
-router.put("/:contactId", update);
+router.delete("/:contactId", authenticate, remove);
 
-router.patch("/:contactId/favorite", updateStatusContact);
+router.put("/:contactId", authenticate, update);
+
+router.patch("/:contactId/favorite", authenticate, updateStatusContact);
 
 module.exports = router;
