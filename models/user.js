@@ -39,6 +39,10 @@ const loginSchema = Joi.object({
   email: Joi.string().pattern(emailFormat).required(),
 });
 
+const userPatchSchema = Joi.object({
+  subscription: Joi.string().valid("starter", "pro", "business").required(),
+});
+
 const User = mongoose.model("user", user);
 
-module.exports = { User, registerSchema, loginSchema };
+module.exports = { User, registerSchema, loginSchema, userPatchSchema };

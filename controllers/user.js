@@ -1,4 +1,9 @@
-const { User, registerSchema, loginSchema } = require("../models/user");
+const {
+  User,
+  registerSchema,
+  loginSchema,
+  userPatchSchema,
+} = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bCrypt = require("bcrypt");
 require("dotenv").config();
@@ -124,9 +129,39 @@ const getCurrent = async (req, res, next) => {
   }
 };
 
+const updateSubscription = async (req, res, next) => {
+  try {
+    const { error } = userPatchSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({
+        status: "error",
+        code: 400,
+        message: "Invalid subscription value",
+      });
+    }
+
+    const { subscription } = req.body;
+    req.user.subscription = subscription;
+    await req.user.save();
+
+    res.json({
+      status: "success",
+      code: 200,
+      data: {
+        message: "Subscription updated successfully",
+        email: req.user.email,
+        subscription: req.user.subscription,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
   getCurrent,
+  updateSubscription,
 };

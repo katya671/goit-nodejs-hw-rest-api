@@ -7,12 +7,15 @@ const {
 
 const getAll = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 20, favorite } = req.query;
     const skip = (page - 1) * limit;
 
     const ownerId = req.user._id;
 
-    const contacts = await Contact.find({ owner: ownerId })
+    const filter = { owner: ownerId };
+    if (favorite) filter.favorite = favorite === "true";
+
+    const contacts = await Contact.find(filter)
       .skip(skip)
       .limit(parseInt(limit));
 
