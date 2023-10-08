@@ -6,8 +6,13 @@ const {
 } = require("../models/user");
 const jwt = require("jsonwebtoken");
 const bCrypt = require("bcrypt");
+const gravatar = require("gravatar");
+const path = require("path");
+const fs = require("fs");
+const jimp = require("jimp");
 require("dotenv").config();
 const secret = process.env.SECRET;
+const avatarsDir = path.join(__dirname, "../public/avatars/");
 
 const register = async (req, res, next) => {
   const { email, password } = req.body;
@@ -31,7 +36,12 @@ const register = async (req, res, next) => {
   }
   try {
     const hashPassword = await bCrypt.hash(password, 10);
-    const newUser = await User.create({ ...req.body, password: hashPassword });
+    const avatarURL = gravatar.url(email, { protocol: "https", s: "250" });
+    const newUser = await User.create({
+      ...req.body,
+      password: hashPassword,
+      avatarURL,
+    });
 
     res.json({
       status: "success",
@@ -158,10 +168,46 @@ const updateSubscription = async (req, res, next) => {
   }
 };
 
+const updateAvatar = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const { path: temporaryName, originalname } = req.file;
+    const filename = `${req.user._id}_${originalname}`;
+    const avatarPath = path.join(avatarsDir, filename);
+
+    const image = await jimp.read(temporaryName);
+    await image.resize(250, 250).writeAsync(temporaryName);
+
+    await fs.rename(temporaryName, avatarPath, (err) => {
+      if (err) {
+        console.log(err);
+      }
+    });
+
+    const avatarURL = path.join("avatars", filename);
+    req.user.avatarURL = avatarURL;
+    await req.user.save();
+
+    res.json({
+      status: "success",
+      code: 200,
+      data: {
+        avatarURL,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
   getCurrent,
   updateSubscription,
+  updateAvatar,
 };
