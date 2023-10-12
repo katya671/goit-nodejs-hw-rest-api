@@ -27,6 +27,13 @@ const user = new Schema(
     token: {
       type: String,
     },
+    verify: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+    },
   },
   { versionKey: false, timestamps: true }
 );
@@ -46,6 +53,16 @@ const userPatchSchema = Joi.object({
   subscription: Joi.string().valid("starter", "pro", "business").required(),
 });
 
+const reVerifySchema = Joi.object({
+  email: Joi.string().pattern(emailFormat).required(),
+});
+
 const User = mongoose.model("user", user);
 
-module.exports = { User, registerSchema, loginSchema, userPatchSchema };
+module.exports = {
+  User,
+  registerSchema,
+  loginSchema,
+  userPatchSchema,
+  reVerifySchema,
+};
